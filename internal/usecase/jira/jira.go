@@ -7,11 +7,11 @@ import (
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 )
 
-type JiraClient struct {
+type jiraClient struct {
 	Client *jira.Client
 }
 
-func New(username string, token string, baseURL string) (*JiraClient, error) {
+func New(username string, token string, baseURL string) (*jiraClient, error) {
 	if username == "" || token == "" || baseURL == "" {
 		return nil, fmt.Errorf("username, token, and baseURL are required")
 	}
@@ -26,10 +26,10 @@ func New(username string, token string, baseURL string) (*JiraClient, error) {
 		return nil, err
 	}
 
-	return &JiraClient{Client: client}, nil
+	return &jiraClient{Client: client}, nil
 }
 
-func (c *JiraClient) GetTicket(ticketNumber string) (*entity.JiraTicket, error) {
+func (c *jiraClient) GetTicket(ticketNumber string) (*entity.JiraTicket, error) {
 	issue, _, err := c.Client.Issue.Get(ticketNumber, nil)
 	if err != nil {
 		return nil, err
