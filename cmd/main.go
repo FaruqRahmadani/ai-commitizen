@@ -85,18 +85,17 @@ func main(){
 	fmt.Printf("%s\n", resultCommitMessage)
 
 	// ask your confirmation
-	confirm := promptui.Prompt{
+	confirm := promptui.Select{
 		Label:     "Are you sure you want to commit with this message?",
-		IsConfirm: true,
-		Default: "Y",
+		Items:     []string{"Yes", "No"},
 	}
-	ticketNumberStr, err = confirm.Run()
+	_, resConfirm, err := confirm.Run()
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
 
-	if ticketNumberStr != "Y" {
+	if resConfirm != "Yes" {
 		fmt.Println("Commit canceled.")
 		return
 	}
