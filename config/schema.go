@@ -1,17 +1,17 @@
 package config
 
 type Config struct{
-	WithAI bool `json:"with_ai"`
-	Jira JiraConfig `json:"jira"`
-	Anthropic AnthropicConfig `json:"anthropic"`
+	WithAI bool
+	Jira JiraConfig
+	Anthropic AnthropicConfig
 }
 
 type JiraConfig struct{
-	Username string `json:"username"`
-	Password string `json:"password"`
-	BaseURL  string `json:"base_url"`
+	Username string
+	Password string
+	BaseURL  string
 }
 
 type AnthropicConfig struct{
-	APIKey string `json:"api_key"`
+	APIKey string
 }
