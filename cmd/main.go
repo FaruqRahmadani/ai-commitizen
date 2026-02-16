@@ -3,16 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"os/exec"
 
 	"github.com/faruqrahmadani/ai-commitizen/config"
-	"github.com/faruqrahmadani/ai-commitizen/internal/constant"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 	"github.com/faruqrahmadani/ai-commitizen/internal/repository/anthropic"
 	commitmessage "github.com/faruqrahmadani/ai-commitizen/internal/usecase/commit_message"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/git"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
-	"github.com/manifoldco/promptui"
 )
 
 type Service struct {
@@ -34,26 +31,19 @@ func main(){
 	service := app()
 
 	// ask your commit message
-	ticketNumber := promptui.Prompt{
-		Label:    "Ticket Number",
-	}
-	ticketNumberStr, err := ticketNumber.Run()
+	ticketNumber, err := PromptTicketNumber()
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
 
-	ticket, err := service.JiraUseCase.GetTicket(ticketNumberStr)
+	ticket, err := service.JiraUseCase.GetTicket(ticketNumber)
 	if err == nil && ticket != nil {
 		fmt.Printf("You're working on %q\n", ticket.Summary)
 	}
 
 	// ask your commit type
-	commitType := promptui.Select{
-		Label: "Commit Type",
-		Items: constant.CommitTypeItems,
-	}
-	commitTypeIndex, _, err := commitType.Run()
+	commitType, err := PromptCommitType()
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
@@ -70,40 +60,34 @@ func main(){
 		return
 	}
 
-	// generate commit message with AI
+	// generate commit message
 	commitMessage, err := service.CommitUseCase.GenerateCommitMessage(entity.CommitMessage{
-		TicketNumber: ticketNumberStr,
-		CommitType:   constant.CommitTypeItems[commitTypeIndex],
+		TicketNumber: ticketNumber,
+		CommitType:   commitType,
 		GitDiff:      diff,
 	})
 	if err != nil {
 		log.Fatalf("failed to generate commit message: %s", err)
 	}
 
-	resultCommitMessage := fmt.Sprintf("%s: (%s) %s", ticketNumberStr, constant.CommitTypeItems[commitTypeIndex], commitMessage)
+	resultCommitMessage := fmt.Sprintf("%s: (%s) %s", ticketNumber, commitType, commitMessage)
 	
 	fmt.Printf("%s\n", resultCommitMessage)
 
 	// ask your confirmation
-	confirm := promptui.Select{
-		Label:     "Are you sure you want to commit with this message?",
-		Items:     []string{"Yes", "No"},
-	}
-	_, resConfirm, err := confirm.Run()
+	confirm, err := PromptCommit()
 	if err != nil {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
 
-	if resConfirm != "Yes" {
+	if !confirm {
 		fmt.Println("Commit canceled.")
 		return
 	}
 
 	// commit with the generated message
-	cmd := exec.Command("git", "commit", "-m", resultCommitMessage)
-	err = cmd.Run()
-	if err != nil {
+	if err := service.GitUseCase.Commit(resultCommitMessage); err != nil {
 		log.Fatalf("failed to commit: %s", err)
 	}
 

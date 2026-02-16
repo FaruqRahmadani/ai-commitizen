@@ -18,3 +18,13 @@ func (uc *gitUC) GetDiff() (string, error) {
 
 	return string(diff), nil
 }
+
+func (uc *gitUC) Commit(msg string) error {
+	cmd := exec.Command("git", "commit", "-m", msg)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
