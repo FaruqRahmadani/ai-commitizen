@@ -10,6 +10,6 @@ type GitUCItf interface{
 	GetDiff() (string, error)
 }
 
-type AIUCItf interface{
+type CommitUCItf interface{
 	GenerateCommitMessage(input entity.CommitMessage) (string, error)
 }

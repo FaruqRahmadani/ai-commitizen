@@ -1,4 +1,4 @@
-package ai
+package commitmessage
 
 import "github.com/faruqrahmadani/ai-commitizen/internal/entity"
 

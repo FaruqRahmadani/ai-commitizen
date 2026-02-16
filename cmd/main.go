@@ -9,7 +9,7 @@ import (
 	"github.com/faruqrahmadani/ai-commitizen/internal/constant"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 	"github.com/faruqrahmadani/ai-commitizen/internal/repository/anthropic"
-	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/ai"
+	commitmessage "github.com/faruqrahmadani/ai-commitizen/internal/usecase/commit_message"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/git"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
 	"github.com/manifoldco/promptui"
@@ -18,7 +18,7 @@ import (
 type Service struct {
 	JiraUseCase JiraUCItf
 	GitUseCase  GitUCItf
-	AIUseCase   AIUCItf
+	CommitUseCase   CommitUCItf
 }
 
 /*
@@ -48,7 +48,6 @@ func main(){
 		fmt.Printf("You're working on %q\n", ticket.Summary)
 	}
 
-
 	// ask your commit type
 	commitType := promptui.Select{
 		Label: "Commit Type",
@@ -72,7 +71,7 @@ func main(){
 	}
 
 	// generate commit message with AI
-	commitMessage, err := service.AIUseCase.GenerateCommitMessage(entity.CommitMessage{
+	commitMessage, err := service.CommitUseCase.GenerateCommitMessage(entity.CommitMessage{
 		TicketNumber: ticketNumberStr,
 		CommitType:   constant.CommitTypeItems[commitTypeIndex],
 		GitDiff:      diff,
@@ -81,7 +80,7 @@ func main(){
 		log.Fatalf("failed to generate commit message: %s", err)
 	}
 
-	resultCommitMessage := fmt.Sprintf("%s: (%s) %s", ticket.TicketNumber, constant.CommitTypeItems[commitTypeIndex], commitMessage)
+	resultCommitMessage := fmt.Sprintf("%s: (%s) %s", ticketNumberStr, constant.CommitTypeItems[commitTypeIndex], commitMessage)
 	
 	fmt.Printf("%s\n", resultCommitMessage)
 
@@ -127,11 +126,11 @@ func app() *Service{
 
 	anthropicRepo := anthropic.New(cfg.Anthropic.APIKey)
 
-	aiUC := ai.NewAIUC(anthropicRepo)
+	commitMessageUC := commitmessage.NewCommitMessageUC(cfg, anthropicRepo)
 
 	return &Service{
 		JiraUseCase: jiraUC,
 		GitUseCase:  gitUC,
-		AIUseCase:   aiUC,
+		CommitUseCase:   commitMessageUC,
 	}
 }
