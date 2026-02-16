@@ -1,17 +1,24 @@
 package config
 
-type Config struct{
-	WithAI bool
-	Jira JiraConfig
+type Config struct {
+	WithAI    bool
+	Provider  string
+	Jira      JiraConfig
 	Anthropic AnthropicConfig
+	Gemini    GeminiConfig
 }
 
-type JiraConfig struct{
+type JiraConfig struct {
 	Username string
 	Password string
 	BaseURL  string
 }
 
-type AnthropicConfig struct{
+type AnthropicConfig struct {
 	APIKey string
+}
+
+type GeminiConfig struct {
+	APIKey string
+	Model  string
 }
