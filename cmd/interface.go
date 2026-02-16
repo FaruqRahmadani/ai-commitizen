@@ -9,6 +9,8 @@ type JiraUCItf interface{
 type GitUCItf interface{
 	GetDiff() (string, error)
 	Commit(msg string) error
+	FilesUnstaged() ([]string, error)
+	StageAllFiles() error
 }
 
 type CommitUCItf interface{

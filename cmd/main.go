@@ -34,6 +34,33 @@ func main() {
 	cyan := color.New(color.Bold, color.FgCyan).SprintFunc()
 	green := color.New(color.Bold, color.FgGreen).SprintFunc()
 
+	// check if there are any unstaged changes
+	files, err := service.GitUseCase.FilesUnstaged()
+	if err != nil {
+		log.Fatalf("failed to check unstaged files: %s", err)
+	}
+
+	if len(files) > 0 {
+		color.Yellow("You have %d unstaged changes. Please stage them with 'git add' first.", len(files))
+		for _, file := range files {
+			color.Red("  %s", file)
+		}
+
+		stageAll, err := PromptStageAllFiles()
+		if err != nil {
+			log.Fatalf("failed to prompt stage all files: %s", err)
+		}
+
+		if !stageAll {
+			color.Yellow("Please stage all files first")
+			return
+		}
+
+		if err := service.GitUseCase.StageAllFiles(); err != nil {
+			log.Fatalf("failed to stage all files: %s", err)
+		}
+	}
+
 	// ask your commit message
 	ticketNumber, err := PromptTicketNumber()
 	if err != nil {
