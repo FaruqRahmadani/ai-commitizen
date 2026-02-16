@@ -6,6 +6,7 @@ import (
 	"github.com/faruqrahmadani/ai-commitizen/config"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 	"github.com/faruqrahmadani/ai-commitizen/internal/repository/anthropic"
+	"github.com/faruqrahmadani/ai-commitizen/internal/repository/gemini"
 	commitmessage "github.com/faruqrahmadani/ai-commitizen/internal/usecase/commit_message"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/git"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
@@ -13,21 +14,21 @@ import (
 )
 
 type Service struct {
-	JiraUseCase JiraUCItf
-	GitUseCase  GitUCItf
-	CommitUseCase   CommitUCItf
+	JiraUseCase   JiraUCItf
+	GitUseCase    GitUCItf
+	CommitUseCase CommitUCItf
 }
 
 /*
-	This apps will ack as a git commit message generator.
-	It will prompt you to input the ticket number, then it will fetch the ticket summary from JIRA.
-	After that, we will check your uncommitted changes.
-	and we will generate a commit message with AI based on the changes.
-	Then you should select the commitizen type such as: Feature, Fix, Chore, etc.
-	Finally, it will generate the commit message like: <TICKET_NUMBER>: <COMMIT_TYPE> <COMMIT_MESSAGE>
-	for Example: STOL-6969: (feat) Generate commit message with AI
+This apps will ack as a git commit message generator.
+It will prompt you to input the ticket number, then it will fetch the ticket summary from JIRA.
+After that, we will check your uncommitted changes.
+and we will generate a commit message with AI based on the changes.
+Then you should select the commitizen type such as: Feature, Fix, Chore, etc.
+Finally, it will generate the commit message like: <TICKET_NUMBER>: <COMMIT_TYPE> <COMMIT_MESSAGE>
+for Example: STOL-6969: (feat) Generate commit message with AI
 */
-func main(){
+func main() {
 	service := app()
 
 	cyan := color.New(color.Bold, color.FgCyan).SprintFunc()
@@ -73,7 +74,6 @@ func main(){
 		log.Fatalf("failed to generate commit message: %s", err)
 	}
 
-
 	color.Yellow("Generated commit message:\n  %s", green(commitMessage))
 
 	// ask your confirmation
@@ -96,7 +96,7 @@ func main(){
 	color.Green("Commit successful.")
 }
 
-func app() *Service{
+func app() *Service {
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Fatalf("failed to read config: %s", err)
@@ -109,13 +109,34 @@ func app() *Service{
 
 	gitUC := git.NewGitUC()
 
-	anthropicRepo := anthropic.New(cfg.Anthropic.APIKey)
+	aiRepo := selectAIProvider(cfg)
 
-	commitMessageUC := commitmessage.NewCommitMessageUC(cfg, anthropicRepo)
+	commitMessageUC := commitmessage.NewCommitMessageUC(cfg, aiRepo)
 
 	return &Service{
-		JiraUseCase: jiraUC,
-		GitUseCase:  gitUC,
-		CommitUseCase:   commitMessageUC,
+		JiraUseCase:   jiraUC,
+		GitUseCase:    gitUC,
+		CommitUseCase: commitMessageUC,
+	}
+}
+
+func selectAIProvider(cfg *config.Config) commitmessage.AIModelRepoItf {
+	if !cfg.WithAI {
+		return nil
+	}
+
+	switch cfg.Provider {
+	case "", "Anthropic":
+		return anthropic.New(cfg.Anthropic.APIKey)
+	case "Gemini":
+		repo, err := gemini.New(cfg.Gemini.APIKey, cfg.Gemini.Model)
+		if err != nil {
+			log.Fatalf("failed to init Gemini repository: %s", err)
+		}
+
+		return repo
+	default:
+		log.Fatalf("unsupported AI provider: %s", cfg.Provider)
+		return nil
 	}
 }
