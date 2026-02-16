@@ -36,7 +36,9 @@ func (c *jiraClient) GetTicket(ticketNumber string) (*entity.JiraTicket, error) 
 	}
 
 	return &entity.JiraTicket{
+		TicketType:   issue.Fields.Type.Name,
 		TicketNumber: ticketNumber,
 		Summary:      issue.Fields.Summary,
+		Status:       issue.Fields.Status.Name,
 	}, nil
 }

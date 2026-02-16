@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/faruqrahmadani/ai-commitizen/config"
@@ -10,6 +9,7 @@ import (
 	commitmessage "github.com/faruqrahmadani/ai-commitizen/internal/usecase/commit_message"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/git"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
+	"github.com/fatih/color"
 )
 
 type Service struct {
@@ -30,22 +30,25 @@ type Service struct {
 func main(){
 	service := app()
 
+	cyan := color.New(color.Bold, color.FgCyan).SprintFunc()
+	green := color.New(color.Bold, color.FgGreen).SprintFunc()
+
 	// ask your commit message
 	ticketNumber, err := PromptTicketNumber()
 	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
+		color.Red("Prompt failed %v", err)
 		return
 	}
 
 	ticket, err := service.JiraUseCase.GetTicket(ticketNumber)
 	if err == nil && ticket != nil {
-		fmt.Printf("You're working on %q\n", ticket.Summary)
+		color.White("You're working on [%s] %s (%s)", cyan(ticket.TicketType), cyan(ticket.Summary), green(ticket.Status))
 	}
 
 	// ask your commit type
 	commitType, err := PromptCommitType()
 	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
+		color.Red("Prompt failed %v", err)
 		return
 	}
 
@@ -56,7 +59,7 @@ func main(){
 	}
 
 	if len(diff) == 0 {
-		fmt.Println("No staged changes found. Please stage your changes with 'git add' first.")
+		color.Yellow("No staged changes found. Please stage your changes with 'git add' first.")
 		return
 	}
 
@@ -70,28 +73,27 @@ func main(){
 		log.Fatalf("failed to generate commit message: %s", err)
 	}
 
-	resultCommitMessage := fmt.Sprintf("%s: (%s) %s", ticketNumber, commitType, commitMessage)
-	
-	fmt.Printf("%s\n", resultCommitMessage)
+
+	color.Yellow("Generated commit message:\n  %s", green(commitMessage))
 
 	// ask your confirmation
 	confirm, err := PromptCommit()
 	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
+		color.Red("Prompt failed %v", err)
 		return
 	}
 
 	if !confirm {
-		fmt.Println("Commit canceled.")
+		color.Yellow("Commit canceled.")
 		return
 	}
 
 	// commit with the generated message
-	if err := service.GitUseCase.Commit(resultCommitMessage); err != nil {
+	if err := service.GitUseCase.Commit(commitMessage); err != nil {
 		log.Fatalf("failed to commit: %s", err)
 	}
 
-	fmt.Println("Commit successful.")
+	color.Green("Commit successful.")
 }
 
 func app() *Service{

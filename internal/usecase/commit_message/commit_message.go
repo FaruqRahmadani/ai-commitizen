@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/faruqrahmadani/ai-commitizen/config"
+	"github.com/faruqrahmadani/ai-commitizen/internal/constant"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 	"github.com/manifoldco/promptui"
 )
@@ -22,7 +23,12 @@ func NewCommitMessageUC(cfg *config.Config, aiRepo AIModelRepoItf) *commitMessag
 
 func (uc *commitMessageUC) GenerateCommitMessage(input entity.CommitMessage) (string, error) {
 	if uc.withAI {
-		return uc.repo.GenerateCommitMessage(input)
+		msg, err := uc.repo.GenerateCommitMessage(input)
+		if err != nil {
+			return "", err
+		}
+
+		return constructCommitMessage(input.TicketNumber, input.CommitType, msg), nil
 	}
 	
 	prompt := promptui.Prompt{
@@ -39,5 +45,9 @@ func (uc *commitMessageUC) GenerateCommitMessage(input entity.CommitMessage) (st
 		return "", fmt.Errorf("commit message is empty")
 	}
 
-	return message, nil
+	return constructCommitMessage(input.TicketNumber, input.CommitType, message), nil
+}
+
+func constructCommitMessage(ticketNumber string, commitType constant.CommitType, commitMessage string) string {
+	return fmt.Sprintf("%s: (%s) %s", ticketNumber, commitType, commitMessage)
 }
