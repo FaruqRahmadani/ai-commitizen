@@ -2,11 +2,13 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/faruqrahmadani/ai-commitizen/config"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
 	"github.com/faruqrahmadani/ai-commitizen/internal/repository/anthropic"
 	"github.com/faruqrahmadani/ai-commitizen/internal/repository/gemini"
+	"github.com/faruqrahmadani/ai-commitizen/internal/repository/ollama"
 	commitmessage "github.com/faruqrahmadani/ai-commitizen/internal/usecase/commit_message"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/git"
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
@@ -152,16 +154,19 @@ func selectAIProvider(cfg *config.Config) commitmessage.AIModelRepoItf {
 		return nil
 	}
 
-	switch cfg.Provider {
-	case "", "Anthropic":
+	switch strings.ToLower(cfg.Provider) {
+	case "", "anthropic":
 		return anthropic.New(cfg.Anthropic.APIKey)
-	case "Gemini":
+	case "gemini":
 		repo, err := gemini.New(cfg.Gemini.APIKey, cfg.Gemini.Model)
 		if err != nil {
 			log.Fatalf("failed to init Gemini repository: %s", err)
 		}
 
 		return repo
+
+	case "ollama":
+		return ollama.New(cfg)
 	default:
 		log.Fatalf("unsupported AI provider: %s", cfg.Provider)
 		return nil

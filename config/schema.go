@@ -6,6 +6,7 @@ type Config struct {
 	Jira      JiraConfig
 	Anthropic AnthropicConfig
 	Gemini    GeminiConfig
+	Ollama    OllamaConfig
 }
 
 type JiraConfig struct {
@@ -21,4 +22,9 @@ type AnthropicConfig struct {
 type GeminiConfig struct {
 	APIKey string
 	Model  string
+}
+
+type OllamaConfig struct {
+	BaseURL string
+	Model   string
 }
