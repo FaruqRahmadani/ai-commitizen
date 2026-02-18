@@ -13,7 +13,7 @@ type anthropicRepository struct {
 	client anthropic.Client
 }
 
-func New(apiKey string) *anthropicRepository{
+func New(apiKey string) *anthropicRepository {
 	client := anthropic.NewClient(
 		option.WithAPIKey(apiKey),
 	)
@@ -23,12 +23,12 @@ func New(apiKey string) *anthropicRepository{
 	}
 }
 
-func (a *anthropicRepository) GenerateCommitMessage(input entity.CommitMessage) (string, error){
+func (a *anthropicRepository) GenerateCommitMessage(input entity.CommitMessage) (string, error) {
 	message, err := a.client.Messages.New(context.TODO(), anthropic.MessageNewParams{
 		MaxTokens: 1024,
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(
-				anthropic.NewTextBlock(fmt.Sprintf("Based on the following git diff, generate a concise commit message that describes the changes. Return only the commit message text without any prefix, suffix, or formatting. Do not include ticket number or commit type in your response.\n\n%s", input.GitDiff)),
+				anthropic.NewTextBlock(fmt.Sprintf("Generate a concise, clear commit message that summarizes the changes in the provided git diff. Focus on the 'what' and 'why' of the changes. Return only the commit message text with no extra formatting, prefixes, or suffixes. Do not include ticket numbers, issue references, or conventional-commit type indicators. The response should be one line.\n\n%s", input.GitDiff)),
 			),
 		},
 		Model: anthropic.ModelClaudeHaiku4_5,

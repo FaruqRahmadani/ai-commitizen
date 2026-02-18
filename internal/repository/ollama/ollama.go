@@ -2,6 +2,7 @@ package ollama
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/faruqrahmadani/ai-commitizen/config"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
@@ -22,10 +23,18 @@ func New(cfg *config.Config) *ollamaRepository {
 }
 
 func (r *ollamaRepository) GenerateCommitMessage(input entity.CommitMessage) (string, error) {
-	resp, err := r.client.Generate(r.model, fmt.Sprintf("Based on the following git diff, generate a concise commit message that describes the changes. Return only the commit message text without any prefix, suffix, or formatting, and without any quotes on the first and last character. Do not include ticket number or commit type in your response.\n\n%s", input.GitDiff))
+	resp, err := r.client.Generate(r.model,
+		fmt.Sprintf(
+			"Generate a concise commit message (≤72 chars) summarizing the diff. "+
+				"Output only the message text—no quotes, prefixes, types, or tickets.\n\n%s",
+			input.GitDiff,
+		),
+	)
 	if err != nil {
 		return "", err
 	}
-		
+
+	resp = strings.Trim(resp, " \n\"")
+
 	return resp, nil
 }

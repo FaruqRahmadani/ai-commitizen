@@ -1,10 +1,11 @@
 # ai-commitizen
 
-AI-powered helper for writing conventional commit messages, integrated with JIRA and AI providers.
+AI-powered helper for writing conventional commit messages, integrated with JIRA and multiple AI providers.
 
 This tool will:
 - Ask for a JIRA ticket number
 - Fetch the ticket summary from JIRA
+- Detect unstaged changes and offer to stage them for you (`git add .`)
 - Read your staged Git diff
 - Ask you to pick a commit type (feat, fix, chore, etc.)
 - Generate a commit message using the configured AI provider, or prompt you to type one
@@ -15,15 +16,14 @@ This tool will:
 - Go (compatible with this module)
 - A JIRA account with API access
 - Config file at `~/.ai-commitizen/config.yaml`
-- For AI mode: an API key for the configured provider (Anthropic, Gemini, etc.)
-- Git repository with changes already staged (`git add ...`)
+- For AI mode: access to the configured provider (Anthropic API key, Gemini API key, or an Ollama instance)
+- Git repository with changes (staged or unstaged)
 
 ## Installation
 
 Recommended (uses installer + git alias):
 
 ```bash
-cd scripts/commitizen
 make install
 # or
 sh install.sh
@@ -43,7 +43,6 @@ source ~/.zshrc
 Manual build (alternative):
 
 ```bash
-cd scripts/commitizen
 go build -o ai-commitizen ./cmd
 ```
 
@@ -59,7 +58,7 @@ Example `config.yaml`:
 
 ```yaml
 WithAI: true
-Provider: anthropic # or "gemini" (when wired up)
+Provider: anthropic # or "gemini" or "ollama"
 Jira:
   Username: your-jira-username
   Password: your-jira-api-token-or-password
@@ -69,24 +68,33 @@ Anthropic:
 Gemini:
   APIKey: your-gemini-api-key
   Model: models/gemini-2.5-flash
+Ollama:
+  BaseURL: http://localhost:11434
+  Model: qwen2.5-coder:7b
 ```
 
 Fields:
 - `WithAI`: set to `true` to use an AI model; `false` will ask you to type a commit message manually
-- `Provider`: which AI backend to use (e.g. `anthropic`, `gemini`)
+- `Provider`: which AI backend to use: `anthropic`, `gemini`, or `ollama` (default is `anthropic` if empty)
 - `Jira.Username`: JIRA username or email
 - `Jira.Password`: JIRA API token or password (depending on your setup)
 - `Jira.BaseURL`: Base URL of your JIRA instance
 - `Anthropic.APIKey`: Anthropic API key used by the SDK
 - `Gemini.APIKey`: Google Gemini API key
 - `Gemini.Model`: Gemini model name (defaults to `models/gemini-2.5-flash` if empty)
+- `Ollama.BaseURL`: Ollama server base URL (e.g. `http://localhost:11434`)
+- `Ollama.Model`: Ollama model name (e.g. `qwen2.5-coder:7b`)
 
 ## Usage
 
-After installation, from inside a Git repository with staged changes:
+After installation, from inside a Git repository:
 
 ```bash
+# Recommended: stage explicitly
 git add .
+git cz
+
+# Or: let ai-commitizen stage all changes when prompted
 git cz
 ```
 
@@ -95,14 +103,14 @@ This runs `ai-commitizen` via the git alias. You can also run it directly:
 ```bash
 ai-commitizen
 # or, from source
-cd scripts/commitizen
 go run ./cmd
 ```
 
 Flow:
-- Input the JIRA ticket number when prompted (e.g. `STOL-6969`)
-- Select a commit type from the list
-- The tool reads your staged diff and calls the configured AI provider (if `WithAI: true`), or asks you to type a message
+- If you have unstaged changes, the tool lists them and asks whether to stage all files (`git add .`).
+- Input the JIRA ticket number when prompted (e.g. `STOL-6969`).
+- Select a commit type from the list.
+- The tool reads your staged diff and calls the configured AI provider (if `WithAI: true`), or asks you to type a message.
 - You will see the full commit message printed, e.g.
 
   `STOL-6969: (feat) Generate commit message with AI`
@@ -112,5 +120,5 @@ Flow:
 ## Notes
 
 - Make sure your config file exists and is valid before running.
-- The tool only looks at staged changes; use `git add` first.
-- If `WithAI` is true but the provider or API key is missing/misconfigured, AI generation will fail and no commit will be made.
+- The generated commit message is always based on staged changes. If you choose not to auto-stage, make sure you have staged the files you want included.
+- If `WithAI` is true but the provider or its configuration (API key, Ollama URL/model, etc.) is missing or misconfigured, AI generation will fail and no commit will be made.
