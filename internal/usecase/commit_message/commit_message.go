@@ -30,9 +30,9 @@ func (uc *commitMessageUC) GenerateCommitMessage(input entity.CommitMessage) (st
 
 		return constructCommitMessage(input.TicketNumber, input.CommitType, msg), nil
 	}
-	
+
 	prompt := promptui.Prompt{
-		Label:     "Input commit message",
+		Label: "Input commit message",
 	}
 
 	message, err := prompt.Run()
@@ -49,5 +49,9 @@ func (uc *commitMessageUC) GenerateCommitMessage(input entity.CommitMessage) (st
 }
 
 func constructCommitMessage(ticketNumber string, commitType constant.CommitType, commitMessage string) string {
+	if ticketNumber == "" {
+		return fmt.Sprintf("(%s) %s", commitType, commitMessage)
+	}
+
 	return fmt.Sprintf("%s: (%s) %s", ticketNumber, commitType, commitMessage)
 }
