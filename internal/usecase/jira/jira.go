@@ -1,7 +1,7 @@
 package jira
 
 import (
-	"fmt"
+	"log"
 
 	jira "github.com/andygrunwald/go-jira"
 	"github.com/faruqrahmadani/ai-commitizen/internal/entity"
@@ -11,9 +11,9 @@ type jiraClient struct {
 	Client *jira.Client
 }
 
-func New(username string, token string, baseURL string) (*jiraClient, error) {
+func New(username string, token string, baseURL string) *jiraClient {
 	if username == "" || token == "" || baseURL == "" {
-		return nil, fmt.Errorf("username, token, and baseURL are required")
+		return nil
 	}
 
 	jiraAuth := jira.BasicAuthTransport{
@@ -23,10 +23,10 @@ func New(username string, token string, baseURL string) (*jiraClient, error) {
 
 	client, err := jira.NewClient(jiraAuth.Client(), baseURL)
 	if err != nil {
-		return nil, err
+		log.Fatalf("failed to init JIRA client: %s", err)
 	}
 
-	return &jiraClient{Client: client}, nil
+	return &jiraClient{Client: client}
 }
 
 func (c *jiraClient) GetTicket(ticketNumber string) (*entity.JiraTicket, error) {

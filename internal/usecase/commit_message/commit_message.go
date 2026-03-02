@@ -31,6 +31,10 @@ func (uc *commitMessageUC) GenerateCommitMessage(input entity.CommitMessage) (st
 		return constructCommitMessage(input.TicketNumber, input.CommitType, msg), nil
 	}
 
+	return uc.ManualCommitMessage(input)
+}
+
+func (uc *commitMessageUC) ManualCommitMessage(input entity.CommitMessage) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Input commit message",
 	}

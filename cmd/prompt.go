@@ -34,8 +34,8 @@ func PromptCommitType() (constant.CommitType, error) {
 
 func PromptCommit() (bool, error) {
 	confirm := promptui.Select{
-		Label:     "Are you sure you want to commit with this message?",
-		Items:     []string{"Yes", "No"},
+		Label: "Are you sure you want to commit with this message?",
+		Items: []string{"Yes", "No"},
 	}
 	_, resConfirm, err := confirm.Run()
 	if err != nil {
@@ -51,8 +51,8 @@ func PromptCommit() (bool, error) {
 
 func PromptStageAllFiles() (bool, error) {
 	confirm := promptui.Select{
-		Label:     "Are you sure you want to stage all files?",
-		Items:     []string{"Yes", "No"},
+		Label: "Are you sure you want to stage all files?",
+		Items: []string{"Yes", "No"},
 	}
 	_, resConfirm, err := confirm.Run()
 	if err != nil {

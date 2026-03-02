@@ -1,6 +1,7 @@
 package git
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -40,6 +41,10 @@ func (uc *gitUC) GetDiff() (string, error) {
 
 func (uc *gitUC) Commit(msg string) error {
 	cmd := exec.Command("git", "commit", "-m", msg)
+	// ensure other hooks is visible to user
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
 	err := cmd.Run()
 	if err != nil {
 		return err

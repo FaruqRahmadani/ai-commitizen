@@ -15,10 +15,10 @@ import (
 	"github.com/fatih/color"
 )
 
-type Service struct {
-	JiraUseCase   JiraUCItf
-	GitUseCase    GitUCItf
-	CommitUseCase CommitUCItf
+type service struct {
+	jiraUseCase   JiraUCItf
+	gitUseCase    GitUCItf
+	commitUseCase CommitUCItf
 }
 
 /*
@@ -37,7 +37,7 @@ func main() {
 	green := color.New(color.Bold, color.FgGreen).SprintFunc()
 
 	// check if there are any unstaged changes
-	files, err := service.GitUseCase.FilesUnstaged()
+	files, err := service.gitUseCase.FilesUnstaged()
 	if err != nil {
 		log.Fatalf("failed to check unstaged files: %s", err)
 	}
@@ -58,21 +58,24 @@ func main() {
 			return
 		}
 
-		if err := service.GitUseCase.StageAllFiles(); err != nil {
+		if err := service.gitUseCase.StageAllFiles(); err != nil {
 			log.Fatalf("failed to stage all files: %s", err)
 		}
 	}
 
-	// ask your commit message
-	ticketNumber, err := PromptTicketNumber()
-	if err != nil {
-		color.Red("Prompt failed %v", err)
-		return
-	}
+	var ticketNumber string
+	if service.jiraUseCase != nil {
+		// ask your commit message
+		ticketNumber, err := PromptTicketNumber()
+		if err != nil {
+			color.Red("Prompt failed %v", err)
+			return
+		}
 
-	ticket, err := service.JiraUseCase.GetTicket(ticketNumber)
-	if err == nil && ticket != nil {
-		color.White("You're working on [%s] %s (%s)", cyan(ticket.TicketType), cyan(ticket.Summary), green(ticket.Status))
+		ticket, err := service.jiraUseCase.GetTicket(ticketNumber)
+		if err == nil && ticket != nil {
+			color.White("You're working on [%s] %s (%s)", cyan(ticket.TicketType), cyan(ticket.Summary), green(ticket.Status))
+		}
 	}
 
 	// ask your commit type
@@ -83,7 +86,7 @@ func main() {
 	}
 
 	// check your uncommitted changes
-	diff, err := service.GitUseCase.GetDiff()
+	diff, err := service.gitUseCase.GetDiff()
 	if err != nil {
 		log.Fatalf("failed to get git diff: %v", err)
 	}
@@ -94,7 +97,7 @@ func main() {
 	}
 
 	// generate commit message
-	commitMessage, err := service.CommitUseCase.GenerateCommitMessage(entity.CommitMessage{
+	commitMessage, err := service.commitUseCase.GenerateCommitMessage(entity.CommitMessage{
 		TicketNumber: ticketNumber,
 		CommitType:   commitType,
 		GitDiff:      diff,
@@ -118,23 +121,20 @@ func main() {
 	}
 
 	// commit with the generated message
-	if err := service.GitUseCase.Commit(commitMessage); err != nil {
+	if err := service.gitUseCase.Commit(commitMessage); err != nil {
 		log.Fatalf("failed to commit: %s", err)
 	}
 
 	color.Green("Commit successful.")
 }
 
-func app() *Service {
+func app() *service {
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Fatalf("failed to read config: %s", err)
 	}
 
-	jiraUC, err := jira.New(cfg.Jira.Username, cfg.Jira.Password, cfg.Jira.BaseURL)
-	if err != nil {
-		log.Fatalf("failed to init JIRA UC: %s", err)
-	}
+	jiraUC := jira.New(cfg.Jira.Username, cfg.Jira.Password, cfg.Jira.BaseURL)
 
 	gitUC := git.NewGitUC()
 
@@ -142,10 +142,10 @@ func app() *Service {
 
 	commitMessageUC := commitmessage.NewCommitMessageUC(cfg, aiRepo)
 
-	return &Service{
-		JiraUseCase:   jiraUC,
-		GitUseCase:    gitUC,
-		CommitUseCase: commitMessageUC,
+	return &service{
+		jiraUseCase:   jiraUC,
+		gitUseCase:    gitUC,
+		commitUseCase: commitMessageUC,
 	}
 }
 
