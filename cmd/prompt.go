@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/faruqrahmadani/ai-commitizen/internal/constant"
 	"github.com/manifoldco/promptui"
 )
@@ -32,21 +36,17 @@ func PromptCommitType() (constant.CommitType, error) {
 	return constant.CommitType(commitType), nil
 }
 
-func PromptCommit() (bool, error) {
+func PromptCommit() (string, error) {
 	confirm := promptui.Select{
 		Label: "Are you sure you want to commit with this message?",
-		Items: []string{"Yes", "No"},
+		Items: []string{"Yes", "Edit", "No"},
 	}
 	_, resConfirm, err := confirm.Run()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	if resConfirm != "Yes" {
-		return false, nil
-	}
-
-	return true, nil
+	return resConfirm, nil
 }
 
 func PromptStageAllFiles() (bool, error) {
@@ -64,4 +64,40 @@ func PromptStageAllFiles() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func PromptEditCommitMessage(msg string) (string, error) {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+
+	tmpFile, err := os.CreateTemp("", "COMMIT_EDITMSG_*")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.WriteString(msg); err != nil {
+		return "", err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return "", err
+	}
+
+	cmd := exec.Command(editor, tmpFile.Name())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	content, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(content)), nil
 }

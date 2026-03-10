@@ -1,124 +1,143 @@
-# ai-commitizen
+# AI Commitizen 🚀
 
-AI-powered helper for writing conventional commit messages, integrated with JIRA and multiple AI providers.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8.svg?style=flat&logo=go)
 
-This tool will:
-- Ask for a JIRA ticket number
-- Fetch the ticket summary from JIRA
-- Detect unstaged changes and offer to stage them for you (`git add .`)
-- Read your staged Git diff
-- Ask you to pick a commit type (feat, fix, chore, etc.)
-- Generate a commit message using the configured AI provider, or prompt you to type one
-- Optionally run `git commit -m "<message>"`
+> **AI-powered CLI tool for writing conventional commit messages, integrated with JIRA and multiple AI providers.**
 
-## Requirements
+Stop writing generic commit messages. Let AI analyze your code changes and generate meaningful, conventional commits for you—contextualized with your Jira tickets.
 
-- Go (compatible with this module)
-- A JIRA account with API access
-- Config file at `~/.ai-commitizen/config.yaml`
-- For AI mode: access to the configured provider (Anthropic API key, Gemini API key, or an Ollama instance)
-- Git repository with changes (staged or unstaged)
+---
 
-## Installation
+## ✨ Features
 
-Recommended (uses installer + git alias):
+- 🤖 **Multi-LLM Support**: Works with **Anthropic (Claude)**, **Google Gemini**, and **Ollama** (for local privacy-focused models).
+- 🎫 **Jira Integration**: Fetches ticket titles and types directly from Jira to prefix your commits (e.g., `STOL-123: (feat) ...`).
+- 📝 **Conventional Commits**: Enforces industry-standard commit formats (`feat`, `fix`, `chore`, etc.).
+- 🔄 **Smart Git Workflow**:
+  - Detects unstaged changes and offers to stage them (`git add .`).
+  - Reads staged diffs automatically.
+  - Connects to git hooks (pre-commit, linters) seamlessly.
+- ✏️ **Interactive Editing**: Not happy with the AI's suggestion? Edit the message in your default `$EDITOR` (Vim, Nano, VS Code, etc.) before committing.
+- ⚡ **Git Alias**: Installs as `git cz` for a native git experience.
+
+---
+
+## 📦 Installation
+
+### Quick Install (Recommended)
+
+You can install the binary and configure the git alias automatically using the provided script:
 
 ```bash
 make install
-# or
+# OR
 sh install.sh
 ```
 
 This will:
-- Build the `ai-commitizen` binary into `$HOME/.local/bin` (or `$AI_COMMITIZEN_INSTALL_DIR`)
-- Configure a global git alias `cz` that runs `ai-commitizen`
+1. Build the binary to `$HOME/.local/bin` (ensure this is in your `PATH`).
+2. Set up `git cz` as a global alias.
 
-Make sure the install directory is in your `PATH`, for example (zsh):
+### Manual Installation
 
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-Manual build (alternative):
+If you prefer to build it yourself:
 
 ```bash
 go build -o ai-commitizen ./cmd
+mv ai-commitizen /usr/local/bin/ # or any directory in your PATH
+git config --global alias.cz '!ai-commitizen'
 ```
 
-You can then move the binary somewhere on your PATH.
+---
 
-## Configuration
+## ⚙️ Configuration
 
-Configuration is read from:
-
-- `~/.ai-commitizen/config.yaml`
-
-Example `config.yaml`:
+Create a configuration file at `~/.ai-commitizen/config.yaml`.
 
 ```yaml
+# Enable AI generation (set to false for manual mode)
 WithAI: true
-Provider: anthropic # or "gemini" or "ollama"
+
+# AI Provider: "anthropic", "gemini", or "ollama"
+Provider: anthropic
+
+# Jira Integration (Optional)
 Jira:
-  Username: your-jira-username
-  Password: your-jira-api-token-or-password
+  Username: your-email@company.com
+  Password: your-api-token # Use API Token, not account password
   BaseURL: https://your-company.atlassian.net
+
+# Provider Configuration
 Anthropic:
-  APIKey: your-anthropic-api-key
+  APIKey: sk-ant-...
+
 Gemini:
-  APIKey: your-gemini-api-key
+  APIKey: AIza...
   Model: models/gemini-2.5-flash
+
 Ollama:
   BaseURL: http://localhost:11434
   Model: qwen2.5-coder:7b
 ```
 
-Fields:
-- `WithAI`: set to `true` to use an AI model; `false` will ask you to type a commit message manually
-- `Provider`: which AI backend to use: `anthropic`, `gemini`, or `ollama` (default is `anthropic` if empty)
-- `Jira.Username`: JIRA username or email
-- `Jira.Password`: JIRA API token or password (depending on your setup)
-- `Jira.BaseURL`: Base URL of your JIRA instance
-- `Anthropic.APIKey`: Anthropic API key used by the SDK
-- `Gemini.APIKey`: Google Gemini API key
-- `Gemini.Model`: Gemini model name (defaults to `models/gemini-2.5-flash` if empty)
-- `Ollama.BaseURL`: Ollama server base URL (e.g. `http://localhost:11434`)
-- `Ollama.Model`: Ollama model name (e.g. `qwen2.5-coder:7b`)
+> **Note**: If `WithAI` is `false`, the tool will skip AI generation and just prompt you for the message, but you still get the Jira integration benefits.
 
-## Usage
+---
 
-After installation, from inside a Git repository:
+## 🚀 Usage
+
+Inside any git repository, simply run:
 
 ```bash
-# Recommended: stage explicitly
-git add .
-git cz
-
-# Or: let ai-commitizen stage all changes when prompted
 git cz
 ```
 
-This runs `ai-commitizen` via the git alias. You can also run it directly:
+### The Workflow
 
-```bash
-ai-commitizen
-# or, from source
-go run ./cmd
+1.  **Stage Changes**: If you haven't staged files, the tool will list them and ask to `git add .`.
+2.  **Ticket Number**: Enter your Jira ticket (e.g., `PROJ-123`). The tool fetches the summary.
+3.  **Commit Type**: Select the type of change:
+    - `feat`: A new feature
+    - `fix`: A bug fix
+    - `chore`: Maintenance
+    - ...and more.
+4.  **AI Generation**: The tool analyzes your `git diff --staged` and generates a commit message.
+5.  **Review & Edit**:
+    - **Yes**: Commit immediately.
+    - **Edit**: Opens your default editor to tweak the message.
+    - **No**: Cancel the operation.
+
+### Example Output
+
+```text
+? Ticket Number: STOL-6969
+[INFO] Fetching Jira ticket...
+You're working on [Story] Add AI generation feature (In Progress)
+
+? Commit Type: feat
+[INFO] Generating commit message...
+
+Generated commit message:
+  STOL-6969: (feat) implement AI-powered commit generation using Anthropic API
+
+? Are you sure you want to commit with this message? [Yes/Edit/No]
 ```
 
-Flow:
-- If you have unstaged changes, the tool lists them and asks whether to stage all files (`git add .`).
-- Input the JIRA ticket number when prompted (e.g. `STOL-6969`).
-- Select a commit type from the list.
-- The tool reads your staged diff and calls the configured AI provider (if `WithAI: true`), or asks you to type a message.
-- You will see the full commit message printed, e.g.
+---
 
-  `STOL-6969: (feat) Generate commit message with AI`
+## 🤝 Contributing
 
-- Confirm to perform `git commit` with that message, or cancel to abort.
+Contributions are welcome! Feel free to submit a Pull Request.
 
-## Notes
+1.  Fork the repository.
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your changes.
+4.  Push to the branch.
+5.  Open a Pull Request.
 
-- Make sure your config file exists and is valid before running.
-- The generated commit message is always based on staged changes. If you choose not to auto-stage, make sure you have staged the files you want included.
-- If `WithAI` is true but the provider or its configuration (API key, Ollama URL/model, etc.) is missing or misconfigured, AI generation will fail and no commit will be made.
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

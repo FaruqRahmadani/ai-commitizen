@@ -1,3 +1,3 @@
 install:
 	@echo "Installing..."
-	@sh install.sh
+	@bash install.sh
