@@ -4,12 +4,6 @@ import (
 	"log"
 )
 
-type service struct {
-	jiraUseCase   JiraUCItf
-	gitUseCase    GitUCItf
-	commitUseCase CommitUCItf
-}
-
 /*
 This apps will ack as a git commit message generator.
 It will prompt you to input the ticket number, then it will fetch the ticket summary from JIRA.

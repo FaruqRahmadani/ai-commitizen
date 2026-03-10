@@ -13,6 +13,12 @@ import (
 	"github.com/faruqrahmadani/ai-commitizen/internal/usecase/jira"
 )
 
+type service struct {
+	jiraUseCase   JiraUCItf
+	gitUseCase    GitUCItf
+	commitUseCase CommitUCItf
+}
+
 func app() *service {
 	cfg, err := config.ReadConfig()
 	if err != nil {
